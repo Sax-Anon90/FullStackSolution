@@ -96,30 +96,3 @@ python scripts/check_api.py --expiry
 On macOS/Linux use `python3` if required. The second command also verifies expiration and takes at least 31 seconds. See `docs/TESTING.md` for browser/error/performance checks. `ServerApp/ServerApp.http` can be opened in Visual Studio or VS Code with a REST Client extension, or reproduced in Postman.
 
 **Verification status of this generated delivery:** static source/configuration/archive checks were performed. The generation environment had no .NET SDK and could not reach SDK/NuGet downloads, so compilation, execution, browser rendering and .NET/API checks have **not** been verified here. Run the commands above and confirm a green GitHub Actions run before submitting. The workflow builds, runs the service checks, publishes the client and tests the live API.
-
-## Activities and marking criteria
-
-| Requirement | Where to review |
-|---|---|
-| GitHub repository (5 points) | Follow `docs/GITHUB.md`; the repository must be created in your account. |
-| Integration code (5 points) | HttpClient registration, ProductService and FetchProducts.razor. |
-| Debugging with Copilot (5 points) | Correct route, CORS registration/middleware, HTTP/JSON/timeout handling; record your actual Copilot work. |
-| JSON structures (5 points) | Shared/Product.cs, ProductData.cs and ServerApp.http. |
-| Optimization with Copilot (5 points) | Client cache, server output cache; run the performance exercise and record Copilot review. |
-| Reflective summary (5 points) | Complete REFLECTION.md using your genuine Copilot session and observations. |
-
-`docs/ACTIVITIES.md` explains the changes across the four stages. This is a consolidated final project, not a fabricated history of four prior commits.
-
-## Copilot and authorship
-
-This starting implementation was generated with **ChatGPT**, not Microsoft Copilot. The comments explain the code and activity requirements; they do not claim Copilot made unobserved contributions. The assignment specifically requires Copilot participation. Use the prompts in `docs/COPILOT.md` to review/refine the project in Copilot, retain evidence of its actual suggestions, then complete `REFLECTION.md` and add accurate comments where you accepted its changes. The reflection is deliberately a template until you do that work.
-
-## GitHub submission
-
-See `docs/GITHUB.md` for repository creation, push commands and the final checklist. GitHub hosts the source for peer review; creating a source repository does not host the running API. No paid cloud deployment is required by the supplied instructions.
-
-## Microsoft documentation
-
-- [Blazor API calls](https://learn.microsoft.com/aspnet/core/blazor/call-web-api?view=aspnetcore-10.0)
-- [ASP.NET Core output caching](https://learn.microsoft.com/aspnet/core/performance/caching/output?view=aspnetcore-10.0)
-- [ASP.NET Core CORS](https://learn.microsoft.com/aspnet/core/security/cors?view=aspnetcore-10.0)
