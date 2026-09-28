@@ -1,0 +1,8 @@
+@page "/about"
+<PageTitle>About | InventoryHub</PageTitle>
+<p class="eyebrow">MICROSOFT FULL STACK DEVELOPER · COURSE 07</p>
+<h1>A simple app. A complete data flow.</h1>
+<p class="subtitle">InventoryHub connects a Blazor WebAssembly interface to an ASP.NET Core Minimal API.</p>
+<section class="about-card"><h2>How it works</h2><ol><li>The products page asks ProductService for data.</li><li>HttpClient requests <code>/api/productlist</code> from ServerApp.</li><li>The API returns a JSON array containing products and their categories.</li><li>The service validates the response, caches it, and returns it to the page.</li><li>Blazor displays the products. Search and filters run in the browser.</li></ol></section>
+<section class="about-card"><h2>Performance and reliability</h2><p>The client reuses successful data for 60 seconds on subsequent loads. The server caches responses for 30 seconds. Refresh bypasses the client cache; it may still receive a server-cached response. There is no background polling.</p><p>Loading, empty results, HTTP errors, timeouts and malformed JSON have dedicated handling. Returning to Products within one minute reuses the client cache.</p></section>
+<section class="about-card"><h2>Project scope</h2><p>This is a read-only learning project using in-memory sample data. It does not require a database, authentication or migrations.</p><a href="fetchproducts">Back to products →</a></section>

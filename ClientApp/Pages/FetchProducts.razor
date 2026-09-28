@@ -1,0 +1,126 @@
+@page "/"
+@page "/fetchproducts"
+@using System.Net
+@using System.Text.Json
+@inject ProductService ProductService
+
+<PageTitle>Products | InventoryHub</PageTitle>
+<div class="page-heading">
+    <div><p class="eyebrow">YOUR INVENTORY, AT A GLANCE</p><h1>Products</h1><p class="subtitle">A clear view of what’s in stock and what needs attention.</p></div>
+    <button class="primary" @onclick="() => LoadProductsAsync(true)" disabled="@isLoading">↻ @(isLoading ? "Loading…" : "Refresh products")</button>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert" role="alert"><strong>We couldn’t load your inventory.</strong><p>@errorMessage</p>
+        @if (products is not null) { <p>The last successfully loaded data is still shown below.</p> }
+        <button @onclick="() => LoadProductsAsync(true)" disabled="@isLoading">Try again</button>
+    </div>
+}
+
+@if (products is null && isLoading)
+{
+    <div class="loading-card" role="status">Connecting to the API and loading your products…</div>
+}
+else if (products is not null)
+{
+    <section class="stats" aria-label="Inventory summary">
+        <article class="stat"><span>Total products</span><strong>@products.Length</strong><small>Across @products.Select(p => p.Category.Id).Distinct().Count() categories</small></article>
+        <article class="stat"><span>Units in stock</span><strong>@products.Sum(p => p.Stock).ToString("N0")</strong><small>Available in your inventory</small></article>
+        <article class="stat"><span>Inventory value</span><strong>@Money(products.Sum(p => p.Price * p.Stock))</strong><small>Unit price × stock · USD</small></article>
+        <article class="stat"><span>Needs attention</span><strong class="amber">@products.Count(p => p.Stock <= 10)</strong><small>Low stock or out of stock</small></article>
+    </section>
+    <section class="product-panel" aria-label="Product list">
+        <div class="panel-title"><div><h2>Product catalogue</h2><p>Browse, filter and inspect your products.</p></div><span class="count-label">@products.Length products</span></div>
+        <div class="filters">
+            <div class="search"><label for="search">Search products</label><input id="search" type="search" placeholder="Search by name or product ID…" @bind="searchText" @bind:event="oninput" /></div>
+            <div><label for="category">Category</label><select id="category" @bind="category"><option value="">All categories</option>@foreach (var name in products.Select(p => p.Category.Name).Distinct().OrderBy(n => n)) { <option value="@name">@name</option> }</select></div>
+            <div><label for="stock">Stock status</label><select id="stock" @bind="stockFilter"><option value="">All statuses</option><option value="available">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select></div>
+        </div>
+        @if (VisibleProducts.Length == 0)
+        {
+            <div class="empty"><h3>@(products.Length == 0 ? "No products yet" : "No matching products")</h3><p>@(products.Length == 0 ? "The API returned an empty product list." : "Try another search or clear your filters.")</p>
+                @if (products.Length > 0) { <button @onclick="ClearFilters">Clear filters</button> }
+            </div>
+        }
+        else
+        {
+            <div class="table-scroll"><table><thead><tr><th scope="col">Product</th><th scope="col">Category</th><th scope="col" class="number">Unit price</th><th scope="col" class="number">Stock</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Details</span></th></tr></thead>
+                <tbody>@foreach (var product in VisibleProducts)
+                {
+                    <tr @key="product.Id"><td><div class="product-name"><span class="product-icon" aria-hidden="true">@product.Name[..1]</span><div><strong>@product.Name</strong><small>PRD-@product.Id.ToString("D3")</small></div></div></td><td><span class="category">@product.Category.Name</span></td><td class="number">@Money(product.Price)</td><td class="number">@product.Stock</td><td><span class="badge @StatusClass(product.Stock)"><span aria-hidden="true">●</span> @StatusText(product.Stock)</span></td><td><button class="text-button" @onclick="() => selectedProduct = product" aria-label="@($"View details for {product.Name}")">View →</button></td></tr>
+                }</tbody></table></div>
+        }
+        <div class="table-footer"><span>Showing @VisibleProducts.Length of @products.Length products</span><span>Last fetched @(ProductService.LastFetchedAt?.ToLocalTime().ToString("HH:mm:ss") ?? "—")</span></div>
+    </section>
+    @if (selectedProduct is not null)
+    {
+        <section class="details" aria-label="Selected product details" aria-live="polite">
+            <div class="panel-title"><div><p class="eyebrow">PRODUCT DETAILS</p><h2>@selectedProduct.Name</h2></div><button @onclick="() => selectedProduct = null">Close details</button></div>
+            <dl><div><dt>Product ID</dt><dd>@selectedProduct.Id</dd></div><div><dt>Category</dt><dd>@selectedProduct.Category.Name (#@selectedProduct.Category.Id)</dd></div><div><dt>Unit price</dt><dd>@Money(selectedProduct.Price)</dd></div><div><dt>Stock value</dt><dd>@Money(selectedProduct.Price * selectedProduct.Stock)</dd></div></dl>
+        </section>
+    }
+    <p class="data-note">Sample inventory · Prices in USD, matching the course example. Low stock means 1–10 units.</p>
+}
+
+@code {
+    private Product[]? products;
+    private Product? selectedProduct;
+    private bool isLoading;
+    private string? errorMessage;
+    private string searchText = "";
+    private string category = "";
+    private string stockFilter = "";
+
+    // Filtering is local: typing and selecting filters never call the API.
+    private Product[] VisibleProducts => (products ?? Array.Empty<Product>()).Where(p =>
+        (p.Name.Contains(searchText.Trim(), StringComparison.OrdinalIgnoreCase)
+            || p.Id.ToString().Contains(searchText.Trim()))
+        && (category == "" || p.Category.Name == category)
+        && (stockFilter switch
+        {
+            "available" => p.Stock > 10,
+            "low" => p.Stock is > 0 and <= 10,
+            "out" => p.Stock == 0,
+            _ => true
+        })).ToArray();
+
+    protected override async Task OnInitializedAsync() => await LoadProductsAsync();
+
+    private async Task LoadProductsAsync(bool forceRefresh = false)
+    {
+        if (isLoading) return;
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            products = await ProductService.GetProductsAsync(forceRefresh);
+            selectedProduct = null;
+        }
+        catch (JsonException)
+        {
+            errorMessage = "The API returned invalid product JSON. Check the product fields and nested category object.";
+        }
+        catch (OperationCanceledException)
+        {
+            errorMessage = "The API request timed out. Check that ServerApp is running, then try again.";
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = ex.StatusCode == HttpStatusCode.NotFound
+                ? "The product endpoint was not found. Check that both projects use /api/productlist."
+                : ex.StatusCode is not null
+                    ? $"The API returned HTTP {(int)ex.StatusCode.Value}. Please try again."
+                    : "Cannot reach the API. Check ServerApp, ApiBaseUrl, and the allowed CORS origin.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ClearFilters() { searchText = ""; category = ""; stockFilter = ""; }
+    private static string Money(decimal value) => value.ToString("C2", CultureInfo.GetCultureInfo("en-US"));
+    private static string StatusText(int stock) => stock == 0 ? "Out of stock" : stock <= 10 ? "Low stock" : "In stock";
+    private static string StatusClass(int stock) => stock == 0 ? "out" : stock <= 10 ? "low" : "available";
+}

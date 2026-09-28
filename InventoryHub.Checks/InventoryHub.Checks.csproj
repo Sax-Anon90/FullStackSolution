@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Shared/Shared.csproj" />
+    <!-- Test the actual service source without requiring a browser or test packages. -->
+    <Compile Include="../ClientApp/Services/ProductService.cs" Link="ProductService.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,24 @@
+@baseUrl = http://localhost:5200
+
+### Correct endpoint: JSON array with nested category objects.
+GET {{baseUrl}}/api/productlist
+Origin: http://localhost:5100
+Accept: application/json
+
+### Repeat within 30 seconds: X-Generated-At should be identical.
+GET {{baseUrl}}/api/productlist
+Origin: http://localhost:5100
+
+### Old route: expected 404.
+GET {{baseUrl}}/api/products
+
+### Allowed-origin preflight: expected 204 and allow-origin header.
+OPTIONS {{baseUrl}}/api/productlist
+Origin: http://localhost:5100
+Access-Control-Request-Method: GET
+Access-Control-Request-Headers: content-type
+
+### Disallowed origin: no Access-Control-Allow-Origin header.
+# CORS is a browser policy, not API authentication; Postman can still read the response.
+GET {{baseUrl}}/api/productlist
+Origin: http://untrusted.example

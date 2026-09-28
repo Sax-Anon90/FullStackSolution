@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.log
+.DS_Store
+artifacts/
+__pycache__/

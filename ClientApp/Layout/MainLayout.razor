@@ -1,0 +1,17 @@
+@inherits LayoutComponentBase
+<div class="shell">
+    <aside class="sidebar">
+        <a class="brand" href=""><img src="favicon.svg" alt="" />InventoryHub<span class="brand-dot">.</span></a>
+        <p class="nav-caption">WORKSPACE</p>
+        <nav aria-label="Main navigation">
+            <NavLink href="fetchproducts">▦ <span>Products</span></NavLink>
+            <NavLink href="about">ⓘ <span>About this project</span></NavLink>
+        </nav>
+        <div class="sidebar-footer"><span class="avatar">IH</span><div><strong>Demo workspace</strong><small>Small business inventory</small></div></div>
+    </aside>
+    <div class="workspace">
+        <header class="topbar"><span>Workspace <span class="slash">/</span> Inventory</span><span class="demo-label">COURSE 07 · FULL STACK INTEGRATION</span></header>
+        <main id="main-content">@Body</main>
+        <footer class="page-footer">InventoryHub <span>Blazor + ASP.NET Core · Sample data</span></footer>
+    </div>
+</div>

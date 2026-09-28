@@ -1,0 +1,28 @@
+name: Build and check InventoryHub
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Build solution
+        run: dotnet build FullStackSolution.sln --configuration Release
+      - name: Run service checks
+        run: dotnet run --project InventoryHub.Checks --configuration Release --no-build
+      - name: Publish Blazor client
+        run: dotnet publish ClientApp --configuration Release --no-build -o artifacts/client
+      - name: Test live API and cache expiry
+        shell: bash
+        run: |
+          dotnet run --project ServerApp --configuration Release --no-build > /tmp/inventoryhub-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/check_api.py --expiry || { cat /tmp/inventoryhub-api.log; exit 1; }
